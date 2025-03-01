@@ -1,0 +1,6 @@
+*.svg
+*.png
+.RData
+.Rhistory
+.Rprofile
+.Rproj.user/
