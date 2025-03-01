@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.39">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>tutorial</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="tutorial_files/libs/clipboard/clipboard.min.js"></script>
+<script src="tutorial_files/libs/quarto-html/quarto.js"></script>
+<script src="tutorial_files/libs/quarto-html/popper.min.js"></script>
+<script src="tutorial_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="tutorial_files/libs/quarto-html/anchor.min.js"></script>
+<link href="tutorial_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="tutorial_files/libs/quarto-html/quarto-syntax-highlighting-e26003cea8cd680ca0c55a263523d882.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="tutorial_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="tutorial_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="tutorial_files/libs/bootstrap/bootstrap-973236bd072d72a04ee9cd82dcc9cb29.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+
+
+
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>The purpose of this tutorial is to demonstrate that by modelling the random error <span class="math inline">\(\sigma\)</span> we can estimate species-area relationships across the full spectrum of areas, i.e., without relying on introducing breakpoints.</p>
+<p>The <code>R</code> and <code>julia</code> code provided here covers for the following steps:</p>
+<ol type="1">
+<li>Simulation of species richness for islands nested in archipelagos</li>
+<li>Visual inspection of the simulated data</li>
+<li>Modeling the species-area relationship</li>
+<li>Validation of the results</li>
+</ol>
+</section>
+<section id="set-up" class="level2">
+<h2 class="anchored" data-anchor-id="set-up">Set up</h2>
+<p>We begin by loading the required packages in both programming languages.</p>
+<div id="2" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">RCall</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Distributions</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">LinearAlgebra</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Turing</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">StatsPlots</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># using Logging maybe needed to suppress Turing's progress meter</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brms)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(truncdist)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="simulating-data" class="level2">
+<h2 class="anchored" data-anchor-id="simulating-data">Simulating data</h2>
+<p>We begin by setting the fixed parameters for the simulation. In the notation below <span class="math inline">\(c\)</span> represents an archipelago intercept and <span class="math inline">\(z\)</span> the coefficient for island area <span class="math inline">\(A\)</span> onto species richness <span class="math inline">\(S\)</span>.</p>
+<p>This gives us Arrhenius law:</p>
+<p><span class="math display">\[
+S = c A^z
+\]</span></p>
+<p>Underlying the <span class="math inline">\(c\)</span> are the hyperparameters <span class="math inline">\(\bar{c}\)</span>, the mean of all archipelago intercepts, and <span class="math inline">\(\tau\)</span> the variation of atoll intercepts.</p>
+<p>The parameters which together will determine the random error <span class="math inline">\(\sigma\)</span> are the baseline error <span class="math inline">\(\sigma_{base}\)</span>, <span class="math inline">\(\gamma_{area}\)</span> and <span class="math inline">\(\gamma_{precip}\)</span>.</p>
+<div id="6" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>n_archipelago <span class="op">=</span> <span class="fl">16</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>c̄ <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>τ <span class="op">=</span> <span class="fl">0.5</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>c <span class="op">=</span> <span class="fu">rand</span>(<span class="fu">Normal</span>(c̄, τ), n_archipelago)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> <span class="fl">3.0</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>γ_area <span class="op">=</span> <span class="op">-</span><span class="fl">1.5</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>γ_precip <span class="op">=</span> <span class="op">-</span><span class="fl">0.8</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>σ_base <span class="op">=</span> <span class="fl">0.0</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>n_archipelago <span class="ot">&lt;-</span> <span class="dv">16</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>c_bar <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>tau <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>c <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n_archipelago, <span class="at">mean =</span> c_bar, <span class="at">sd =</span> tau)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>z <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>gamma_area <span class="ot">&lt;-</span> <span class="sc">-</span><span class="fl">1.5</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>gamma_precip <span class="ot">&lt;-</span> <span class="sc">-</span><span class="fl">0.8</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>sigma_base <span class="ot">&lt;-</span> <span class="fl">0.0</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>We then draw the number of islands for each archipelago from a Poisson distribution with <span class="math inline">\(\lambda = 20\)</span> and truncated at a lower bound of <span class="math inline">\(4\)</span>. <!-- truncation is probably redundant given the distribution of Poisson(20) --></p>
+<div id="10" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>trunc_pois <span class="op">=</span> <span class="fu">truncated</span>(<span class="fu">Poisson</span>(<span class="fl">20</span>), lower<span class="op">=</span><span class="fl">4</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>islands_per_archipelago <span class="op">=</span> <span class="fu">rand</span>(trunc_pois, n_archipelago)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>n_islands <span class="op">=</span> <span class="fu">sum</span>(islands_per_archipelago)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>archipelago <span class="op">=</span> <span class="fu">reduce</span>(vcat, <span class="fu">fill</span>.(<span class="fl">1</span><span class="op">:</span>n_archipelago, islands_per_archipelago))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">archipelago =</span> <span class="dv">1</span><span class="sc">:</span>n_archipelago,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_islands =</span> truncdist<span class="sc">::</span><span class="fu">rtrunc</span>(n_archipelago, <span class="st">"pois"</span>, <span class="at">a =</span> <span class="dv">4</span>, <span class="at">b =</span> <span class="cn">Inf</span>, <span class="at">lambda =</span> <span class="dv">20</span>),</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">precip =</span> <span class="fu">rnorm</span>(n_archipelago, <span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> <span class="dv">1</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">uncount</span>(n_islands) <span class="sc">%&gt;%</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">area =</span> <span class="fu">rnorm</span>(<span class="fu">nrow</span>(.), <span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> <span class="dv">1</span>),</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">island =</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(.))</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="12" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-display" data-execution_count="1">
+<div><div style="float: left;"><span>344×4 DataFrame</span></div><div style="float: right;"><span style="font-style: italic;">319 rows omitted</span></div><div style="clear: both;"></div></div><div class="data-frame" style="overflow-x: scroll;">
+<table class="data-frame caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th class="rowNumber" data-quarto-table-cell-role="th" style="text-align: right; font-weight: bold;">Row</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">archipelago</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">precip</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">area</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">island</th>
+</tr>
+<tr class="subheader headerLastRow even">
+<th class="rowNumber" data-quarto-table-cell-role="th" style="text-align: right; font-weight: bold;"></th>
+<th style="text-align: left;" data-quarto-table-cell-role="th" title="Int64">Int64</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th" title="Float64">Float64</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th" title="Float64">Float64</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th" title="Int64">Int64</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">-1.17899</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">0.518875</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">0.495605</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">-0.33963</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">5</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">0.276616</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">6</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">0.532579</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">7</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">-0.652738</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr class="even">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">8</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">-0.37624</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">9</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">1.39676</td>
+<td style="text-align: right;">9</td>
+</tr>
+<tr class="even">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">10</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">-1.0202</td>
+<td style="text-align: right;">10</td>
+</tr>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">11</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">2.27146</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr class="even">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">12</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">0.0565774</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">13</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.34735</td>
+<td style="text-align: right;">-0.044676</td>
+<td style="text-align: right;">13</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">⋮</td>
+<td style="text-align: right;">⋮</td>
+<td style="text-align: right;">⋮</td>
+<td style="text-align: right;">⋮</td>
+<td style="text-align: right;">⋮</td>
+</tr>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">333</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.970041</td>
+<td style="text-align: right;">0.148669</td>
+<td style="text-align: right;">333</td>
+</tr>
+<tr class="even">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">334</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.970041</td>
+<td style="text-align: right;">1.37988</td>
+<td style="text-align: right;">334</td>
+</tr>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">335</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.970041</td>
+<td style="text-align: right;">-0.0970555</td>
+<td style="text-align: right;">335</td>
+</tr>
+<tr class="even">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">336</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.970041</td>
+<td style="text-align: right;">-0.996901</td>
+<td style="text-align: right;">336</td>
+</tr>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">337</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.970041</td>
+<td style="text-align: right;">0.263738</td>
+<td style="text-align: right;">337</td>
+</tr>
+<tr class="even">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">338</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.970041</td>
+<td style="text-align: right;">0.773785</td>
+<td style="text-align: right;">338</td>
+</tr>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">339</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.970041</td>
+<td style="text-align: right;">0.574744</td>
+<td style="text-align: right;">339</td>
+</tr>
+<tr class="even">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">340</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.970041</td>
+<td style="text-align: right;">-0.991047</td>
+<td style="text-align: right;">340</td>
+</tr>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">341</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.970041</td>
+<td style="text-align: right;">0.79948</td>
+<td style="text-align: right;">341</td>
+</tr>
+<tr class="even">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">342</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.970041</td>
+<td style="text-align: right;">-1.15135</td>
+<td style="text-align: right;">342</td>
+</tr>
+<tr class="odd">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">343</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.970041</td>
+<td style="text-align: right;">-1.82681</td>
+<td style="text-align: right;">343</td>
+</tr>
+<tr class="even">
+<td class="rowNumber" style="text-align: right; font-weight: bold;">344</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.970041</td>
+<td style="text-align: right;">1.68534</td>
+<td style="text-align: right;">344</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>Finally, we simulate the species <code>richness</code> for each island by taking into account each archipelago’s intercept and precipitation values.</p>
+<div id="14" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>area <span class="op">=</span> <span class="fu">rand</span>(<span class="fu">Normal</span>(<span class="fl">0</span>, <span class="fl">1</span>), n_islands)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>precip <span class="op">=</span> <span class="fu">rand</span>(<span class="fu">Normal</span>(<span class="fl">0</span>, <span class="fl">1</span>), n_archipelago)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>richness <span class="op">=</span> <span class="kw">let</span> j <span class="op">=</span> archipelago</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    μ <span class="op">=</span> @. c[j] <span class="op">+</span> area <span class="op">*</span> z</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    σ <span class="op">=</span> @. <span class="fu">exp</span>(σ_base <span class="op">+</span> γ_area <span class="op">*</span> area <span class="op">+</span> γ_precip <span class="op">*</span> precip[j])</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rand</span>(<span class="fu">MvNormal</span>(μ, σ))</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="1">
+<pre><code>305-element Vector{Float64}:
+ -0.9487915731701649
+  0.31096889591672766
+  3.647628393525481
+  2.562930761303882
+  0.8786691530663102
+  2.9695376930201927
+  0.18794500482939927
+  1.3806191366375375
+  2.939371578034532
+  2.316244480212539
+  ⋮
+ -1.8407226499303309
+  1.416288785206171
+  1.9113216839864164
+  3.7421671678033253
+  0.5653639864425953
+  0.30251631090816866
+ -2.1041487001113697
+  1.6633719579586876
+  0.003686911148321037</code></pre>
+</div>
+</div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>mu <span class="ot">&lt;-</span> c[dat<span class="sc">$</span>archipelago] <span class="sc">+</span> dat<span class="sc">$</span>area <span class="sc">*</span> z</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>sigma <span class="ot">&lt;-</span> <span class="fu">exp</span>(sigma_base <span class="sc">+</span> gamma_area <span class="sc">*</span> dat<span class="sc">$</span>area <span class="sc">+</span> gamma_precip <span class="sc">*</span> dat<span class="sc">$</span>precip)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>dat<span class="sc">$</span>richness <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fu">nrow</span>(dat), <span class="at">mean =</span> mu, <span class="at">sd =</span> sigma)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>dat</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="model" class="level2">
+<h2 class="anchored" data-anchor-id="model">Model</h2>
+<p>In <code>julia</code>, we use the probabilistic programming language Turing.jl to specify the model. The more lengthy but also more explicit model syntax reveals that the likelihood in our model directly matches the data-generating process.</p>
+<div id="18" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="pp">@model</span> <span class="kw">function</span> <span class="fu">distributional_model</span>(archipelago, area, precip)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    j <span class="op">=</span> <span class="fu">length</span>(<span class="fu">unique</span>(archipelago))</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Priors</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    α_bar_area <span class="op">~</span> <span class="fu">Normal</span>(<span class="fl">0</span>, <span class="fl">1</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    τ_area <span class="op">~</span> <span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    α_area <span class="op">~</span> <span class="fu">filldist</span>(<span class="fu">Normal</span>(α_bar_area, τ_area), j)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    β_area <span class="op">~</span> <span class="fu">Normal</span>(<span class="fl">0</span>, <span class="fl">1</span>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    σ_base <span class="op">~</span> <span class="fu">Cauchy</span>(<span class="fl">0</span>, <span class="fl">1</span>)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    γ_area <span class="op">~</span> <span class="fu">Normal</span>(<span class="fl">0</span>, <span class="fl">0.25</span>)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    γ_precip <span class="op">~</span> <span class="fu">Normal</span>(<span class="fl">0</span>, <span class="fl">0.25</span>)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Likelihood</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    μ <span class="op">=</span> @. α_area[archipelago] <span class="op">+</span> β_area <span class="op">*</span> area</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    σ <span class="op">=</span> @. <span class="fu">exp</span>(σ_base <span class="op">+</span> γ_area <span class="op">*</span> area <span class="op">+</span> γ_precip <span class="op">*</span> precip[archipelago])</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    richness <span class="op">~</span> <span class="fu">MvNormal</span>(μ, σ<span class="op">.^</span><span class="fl">2</span>)</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (; μ, σ)</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>In <code>R</code>, we can use the <code>brms</code> package to specify the equivalent model with <code>R</code>’s widely-used formula syntax.</p>
+<p>Note that the <code>save_pars = save_pars(all = TRUE)</code> is only necessary if model evaluation techniques such as leave-one-out crossvalidation <code>loo()</code> are to be used.</p>
+<div id="20" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>prior_model <span class="op">=</span> <span class="fu">distributional_model</span>(archipelago, area, precip)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>conditioned_model <span class="op">=</span> prior_model <span class="op">|</span> (richness<span class="op">=</span>richness,)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>chn <span class="op">=</span> <span class="fu">sample</span>(conditioned_model, <span class="fu">NUTS</span>(), <span class="fl">1000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sampling   0%|                                          |  ETA: N/A
+┌ Info: Found initial step size
+└   ϵ = 0.000390625
+Sampling   0%|▎                                         |  ETA: 0:31:32
+Sampling   1%|▍                                         |  ETA: 0:15:45
+Sampling   1%|▋                                         |  ETA: 0:10:29
+Sampling   2%|▊                                         |  ETA: 0:07:51
+Sampling   2%|█                                         |  ETA: 0:06:18
+Sampling   3%|█▏                                        |  ETA: 0:05:17
+Sampling   3%|█▍                                        |  ETA: 0:04:32
+Sampling   4%|█▋                                        |  ETA: 0:03:58
+Sampling   4%|█▊                                        |  ETA: 0:03:32
+Sampling   5%|██                                        |  ETA: 0:03:11
+Sampling   5%|██▏                                       |  ETA: 0:02:54
+Sampling   6%|██▍                                       |  ETA: 0:02:40
+Sampling   6%|██▌                                       |  ETA: 0:02:28
+Sampling   7%|██▊                                       |  ETA: 0:02:17
+Sampling   7%|███                                       |  ETA: 0:02:09
+Sampling   7%|███▏                                      |  ETA: 0:02:01
+Sampling   8%|███▍                                      |  ETA: 0:01:53
+Sampling   8%|███▌                                      |  ETA: 0:01:47
+Sampling   9%|███▊                                      |  ETA: 0:01:41
+Sampling   9%|███▉                                      |  ETA: 0:01:36
+Sampling  10%|████▏                                     |  ETA: 0:01:31
+Sampling  10%|████▎                                     |  ETA: 0:01:26
+Sampling  11%|████▌                                     |  ETA: 0:01:22
+Sampling  11%|████▊                                     |  ETA: 0:01:19
+Sampling  12%|████▉                                     |  ETA: 0:01:15
+Sampling  12%|█████▏                                    |  ETA: 0:01:12
+Sampling  13%|█████▎                                    |  ETA: 0:01:09
+Sampling  13%|█████▌                                    |  ETA: 0:01:07
+Sampling  14%|█████▋                                    |  ETA: 0:01:04
+Sampling  14%|█████▉                                    |  ETA: 0:01:02
+Sampling  14%|██████▏                                   |  ETA: 0:01:00
+Sampling  15%|██████▎                                   |  ETA: 0:00:57
+Sampling  15%|██████▌                                   |  ETA: 0:00:56
+Sampling  16%|██████▋                                   |  ETA: 0:00:54
+Sampling  16%|██████▉                                   |  ETA: 0:00:52
+Sampling  17%|███████                                   |  ETA: 0:00:50
+Sampling  17%|███████▎                                  |  ETA: 0:00:49
+Sampling  18%|███████▌                                  |  ETA: 0:00:47
+Sampling  18%|███████▋                                  |  ETA: 0:00:46
+Sampling  19%|███████▉                                  |  ETA: 0:00:45
+Sampling  19%|████████                                  |  ETA: 0:00:43
+Sampling  20%|████████▎                                 |  ETA: 0:00:42
+Sampling  20%|████████▍                                 |  ETA: 0:00:41
+Sampling  21%|████████▋                                 |  ETA: 0:00:40
+Sampling  21%|████████▉                                 |  ETA: 0:00:39
+Sampling  21%|█████████                                 |  ETA: 0:00:38
+Sampling  22%|█████████▎                                |  ETA: 0:00:37
+Sampling  22%|█████████▍                                |  ETA: 0:00:36
+Sampling  23%|█████████▋                                |  ETA: 0:00:35
+Sampling  23%|█████████▊                                |  ETA: 0:00:34
+Sampling  24%|██████████                                |  ETA: 0:00:33
+Sampling  24%|██████████▎                               |  ETA: 0:00:33
+Sampling  25%|██████████▍                               |  ETA: 0:00:32
+Sampling  25%|██████████▋                               |  ETA: 0:00:31
+Sampling  26%|██████████▊                               |  ETA: 0:00:30
+Sampling  26%|███████████                               |  ETA: 0:00:30
+Sampling  27%|███████████▏                              |  ETA: 0:00:29
+Sampling  27%|███████████▍                              |  ETA: 0:00:28
+Sampling  28%|███████████▋                              |  ETA: 0:00:28
+Sampling  28%|███████████▊                              |  ETA: 0:00:27
+Sampling  28%|████████████                              |  ETA: 0:00:27
+Sampling  29%|████████████▏                             |  ETA: 0:00:26
+Sampling  29%|████████████▍                             |  ETA: 0:00:26
+Sampling  30%|████████████▌                             |  ETA: 0:00:25
+Sampling  30%|████████████▊                             |  ETA: 0:00:24
+Sampling  31%|████████████▉                             |  ETA: 0:00:24
+Sampling  31%|█████████████▏                            |  ETA: 0:00:24
+Sampling  32%|█████████████▍                            |  ETA: 0:00:23
+Sampling  32%|█████████████▌                            |  ETA: 0:00:23
+Sampling  33%|█████████████▊                            |  ETA: 0:00:22
+Sampling  33%|█████████████▉                            |  ETA: 0:00:22
+Sampling  34%|██████████████▏                           |  ETA: 0:00:21
+Sampling  34%|██████████████▎                           |  ETA: 0:00:21
+Sampling  35%|██████████████▌                           |  ETA: 0:00:21
+Sampling  35%|██████████████▊                           |  ETA: 0:00:20
+Sampling  35%|██████████████▉                           |  ETA: 0:00:20
+Sampling  36%|███████████████▏                          |  ETA: 0:00:20
+Sampling  36%|███████████████▎                          |  ETA: 0:00:19
+Sampling  37%|███████████████▌                          |  ETA: 0:00:19
+Sampling  37%|███████████████▋                          |  ETA: 0:00:19
+Sampling  38%|███████████████▉                          |  ETA: 0:00:18
+Sampling  38%|████████████████▏                         |  ETA: 0:00:18
+Sampling  39%|████████████████▎                         |  ETA: 0:00:18
+Sampling  39%|████████████████▌                         |  ETA: 0:00:17
+Sampling  40%|████████████████▋                         |  ETA: 0:00:17
+Sampling  40%|████████████████▉                         |  ETA: 0:00:17
+Sampling  41%|█████████████████                         |  ETA: 0:00:16
+Sampling  41%|█████████████████▎                        |  ETA: 0:00:16
+Sampling  42%|█████████████████▌                        |  ETA: 0:00:16
+Sampling  42%|█████████████████▋                        |  ETA: 0:00:16
+Sampling  42%|█████████████████▉                        |  ETA: 0:00:15
+Sampling  43%|██████████████████                        |  ETA: 0:00:15
+Sampling  43%|██████████████████▎                       |  ETA: 0:00:15
+Sampling  44%|██████████████████▍                       |  ETA: 0:00:15
+Sampling  44%|██████████████████▋                       |  ETA: 0:00:14
+Sampling  45%|██████████████████▉                       |  ETA: 0:00:14
+Sampling  45%|███████████████████                       |  ETA: 0:00:14
+Sampling  46%|███████████████████▎                      |  ETA: 0:00:14
+Sampling  46%|███████████████████▍                      |  ETA: 0:00:13
+Sampling  47%|███████████████████▋                      |  ETA: 0:00:13
+Sampling  47%|███████████████████▊                      |  ETA: 0:00:13
+Sampling  48%|████████████████████                      |  ETA: 0:00:13
+Sampling  48%|████████████████████▎                     |  ETA: 0:00:13
+Sampling  49%|████████████████████▍                     |  ETA: 0:00:12
+Sampling  49%|████████████████████▋                     |  ETA: 0:00:12
+Sampling  49%|████████████████████▊                     |  ETA: 0:00:12
+Sampling  50%|█████████████████████                     |  ETA: 0:00:12
+Sampling  50%|█████████████████████▏                    |  ETA: 0:00:12
+Sampling  51%|█████████████████████▍                    |  ETA: 0:00:11
+Sampling  51%|█████████████████████▌                    |  ETA: 0:00:11
+Sampling  52%|█████████████████████▊                    |  ETA: 0:00:11
+Sampling  52%|██████████████████████                    |  ETA: 0:00:11
+Sampling  53%|██████████████████████▏                   |  ETA: 0:00:11
+Sampling  53%|██████████████████████▍                   |  ETA: 0:00:10
+Sampling  54%|██████████████████████▌                   |  ETA: 0:00:10
+Sampling  54%|██████████████████████▊                   |  ETA: 0:00:10
+Sampling  55%|██████████████████████▉                   |  ETA: 0:00:10
+Sampling  55%|███████████████████████▏                  |  ETA: 0:00:10
+Sampling  56%|███████████████████████▍                  |  ETA: 0:00:10
+Sampling  56%|███████████████████████▌                  |  ETA: 0:00:09
+Sampling  56%|███████████████████████▊                  |  ETA: 0:00:09
+Sampling  57%|███████████████████████▉                  |  ETA: 0:00:09
+Sampling  57%|████████████████████████▏                 |  ETA: 0:00:09
+Sampling  58%|████████████████████████▎                 |  ETA: 0:00:09
+Sampling  58%|████████████████████████▌                 |  ETA: 0:00:09
+Sampling  59%|████████████████████████▊                 |  ETA: 0:00:08
+Sampling  59%|████████████████████████▉                 |  ETA: 0:00:08
+Sampling  60%|█████████████████████████▏                |  ETA: 0:00:08
+Sampling  60%|█████████████████████████▎                |  ETA: 0:00:08
+Sampling  61%|█████████████████████████▌                |  ETA: 0:00:08
+Sampling  61%|█████████████████████████▋                |  ETA: 0:00:08
+Sampling  62%|█████████████████████████▉                |  ETA: 0:00:08
+Sampling  62%|██████████████████████████▏               |  ETA: 0:00:07
+Sampling  63%|██████████████████████████▎               |  ETA: 0:00:07
+Sampling  63%|██████████████████████████▌               |  ETA: 0:00:07
+Sampling  63%|██████████████████████████▋               |  ETA: 0:00:07
+Sampling  64%|██████████████████████████▉               |  ETA: 0:00:07
+Sampling  64%|███████████████████████████               |  ETA: 0:00:07
+Sampling  65%|███████████████████████████▎              |  ETA: 0:00:07
+Sampling  65%|███████████████████████████▌              |  ETA: 0:00:07
+Sampling  66%|███████████████████████████▋              |  ETA: 0:00:06
+Sampling  66%|███████████████████████████▉              |  ETA: 0:00:06
+Sampling  67%|████████████████████████████              |  ETA: 0:00:06
+Sampling  67%|████████████████████████████▎             |  ETA: 0:00:06
+Sampling  68%|████████████████████████████▍             |  ETA: 0:00:06
+Sampling  68%|████████████████████████████▋             |  ETA: 0:00:06
+Sampling  69%|████████████████████████████▊             |  ETA: 0:00:06
+Sampling  69%|█████████████████████████████             |  ETA: 0:00:06
+Sampling  70%|█████████████████████████████▎            |  ETA: 0:00:06
+Sampling  70%|█████████████████████████████▍            |  ETA: 0:00:05
+Sampling  70%|█████████████████████████████▋            |  ETA: 0:00:05
+Sampling  71%|█████████████████████████████▊            |  ETA: 0:00:05
+Sampling  71%|██████████████████████████████            |  ETA: 0:00:05
+Sampling  72%|██████████████████████████████▏           |  ETA: 0:00:05
+Sampling  72%|██████████████████████████████▍           |  ETA: 0:00:05
+Sampling  73%|██████████████████████████████▋           |  ETA: 0:00:05
+Sampling  73%|██████████████████████████████▊           |  ETA: 0:00:05
+Sampling  74%|███████████████████████████████           |  ETA: 0:00:05
+Sampling  74%|███████████████████████████████▏          |  ETA: 0:00:04
+Sampling  75%|███████████████████████████████▍          |  ETA: 0:00:04
+Sampling  75%|███████████████████████████████▌          |  ETA: 0:00:04
+Sampling  76%|███████████████████████████████▊          |  ETA: 0:00:04
+Sampling  76%|████████████████████████████████          |  ETA: 0:00:04
+Sampling  77%|████████████████████████████████▏         |  ETA: 0:00:04
+Sampling  77%|████████████████████████████████▍         |  ETA: 0:00:04
+Sampling  77%|████████████████████████████████▌         |  ETA: 0:00:04
+Sampling  78%|████████████████████████████████▊         |  ETA: 0:00:04
+Sampling  78%|████████████████████████████████▉         |  ETA: 0:00:04
+Sampling  79%|█████████████████████████████████▏        |  ETA: 0:00:03
+Sampling  79%|█████████████████████████████████▍        |  ETA: 0:00:03
+Sampling  80%|█████████████████████████████████▌        |  ETA: 0:00:03
+Sampling  80%|█████████████████████████████████▊        |  ETA: 0:00:03
+Sampling  81%|█████████████████████████████████▉        |  ETA: 0:00:03
+Sampling  81%|██████████████████████████████████▏       |  ETA: 0:00:03
+Sampling  82%|██████████████████████████████████▎       |  ETA: 0:00:03
+Sampling  82%|██████████████████████████████████▌       |  ETA: 0:00:03
+Sampling  83%|██████████████████████████████████▊       |  ETA: 0:00:03
+Sampling  83%|██████████████████████████████████▉       |  ETA: 0:00:03
+Sampling  84%|███████████████████████████████████▏      |  ETA: 0:00:03
+Sampling  84%|███████████████████████████████████▎      |  ETA: 0:00:03
+Sampling  84%|███████████████████████████████████▌      |  ETA: 0:00:02
+Sampling  85%|███████████████████████████████████▋      |  ETA: 0:00:02
+Sampling  85%|███████████████████████████████████▉      |  ETA: 0:00:02
+Sampling  86%|████████████████████████████████████▏     |  ETA: 0:00:02
+Sampling  86%|████████████████████████████████████▎     |  ETA: 0:00:02
+Sampling  87%|████████████████████████████████████▌     |  ETA: 0:00:02
+Sampling  87%|████████████████████████████████████▋     |  ETA: 0:00:02
+Sampling  88%|████████████████████████████████████▉     |  ETA: 0:00:02
+Sampling  88%|█████████████████████████████████████     |  ETA: 0:00:02
+Sampling  89%|█████████████████████████████████████▎    |  ETA: 0:00:02
+Sampling  89%|█████████████████████████████████████▍    |  ETA: 0:00:02
+Sampling  90%|█████████████████████████████████████▋    |  ETA: 0:00:02
+Sampling  90%|█████████████████████████████████████▉    |  ETA: 0:00:01
+Sampling  91%|██████████████████████████████████████    |  ETA: 0:00:01
+Sampling  91%|██████████████████████████████████████▎   |  ETA: 0:00:01
+Sampling  91%|██████████████████████████████████████▍   |  ETA: 0:00:01
+Sampling  92%|██████████████████████████████████████▋   |  ETA: 0:00:01
+Sampling  92%|██████████████████████████████████████▊   |  ETA: 0:00:01
+Sampling  93%|███████████████████████████████████████   |  ETA: 0:00:01
+Sampling  93%|███████████████████████████████████████▎  |  ETA: 0:00:01
+Sampling  94%|███████████████████████████████████████▍  |  ETA: 0:00:01
+Sampling  94%|███████████████████████████████████████▋  |  ETA: 0:00:01
+Sampling  95%|███████████████████████████████████████▊  |  ETA: 0:00:01
+Sampling  95%|████████████████████████████████████████  |  ETA: 0:00:01
+Sampling  96%|████████████████████████████████████████▏ |  ETA: 0:00:01
+Sampling  96%|████████████████████████████████████████▍ |  ETA: 0:00:01
+Sampling  97%|████████████████████████████████████████▋ |  ETA: 0:00:00
+Sampling  97%|████████████████████████████████████████▊ |  ETA: 0:00:00
+Sampling  98%|█████████████████████████████████████████ |  ETA: 0:00:00
+Sampling  98%|█████████████████████████████████████████▏|  ETA: 0:00:00
+Sampling  98%|█████████████████████████████████████████▍|  ETA: 0:00:00
+Sampling  99%|█████████████████████████████████████████▌|  ETA: 0:00:00
+Sampling  99%|█████████████████████████████████████████▊|  ETA: 0:00:00
+Sampling 100%|██████████████████████████████████████████|  ETA: 0:00:00
+Sampling 100%|██████████████████████████████████████████| Time: 0:00:14</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="1">
+<pre><code>Chains MCMC chain (1000×34×1 Array{Float64, 3}):
+
+Iterations        = 501:1:1500
+Number of chains  = 1
+Samples per chain = 1000
+Wall duration     = 14.8 seconds
+Compute duration  = 14.8 seconds
+parameters        = α_bar_area, τ_area, α_area[1], α_area[2], α_area[3], α_area[4], α_area[5], α_area[6], α_area[7], α_area[8], α_area[9], α_area[10], α_area[11], α_area[12], α_area[13], α_area[14], α_area[15], α_area[16], β_area, σ_base, γ_area, γ_precip
+internals         = lp, n_steps, is_accept, acceptance_rate, log_density, hamiltonian_energy, hamiltonian_energy_error, max_hamiltonian_energy_error, tree_depth, numerical_error, step_size, nom_step_size
+
+Summary Statistics
+  parameters      mean       std      mcse   ess_bulk   ess_tail      rhat   e ⋯
+      Symbol   Float64   Float64   Float64    Float64    Float64   Float64     ⋯
+
+  α_bar_area    0.1457    0.1200    0.0058   449.4010   517.0083    1.0020     ⋯
+      τ_area    0.4410    0.0973    0.0042   562.9385   555.8695    1.0025     ⋯
+   α_area[1]    0.7218    0.0498    0.0026   366.2253   627.6126    0.9995     ⋯
+   α_area[2]    0.0661    0.1547    0.0060   683.9946   737.3972    0.9999     ⋯
+   α_area[3]    0.2038    0.0767    0.0043   317.1640   519.7045    1.0003     ⋯
+   α_area[4]    0.3489    0.0689    0.0037   356.3781   457.5581    1.0020     ⋯
+   α_area[5]    0.1068    0.0642    0.0041   248.3610   448.2214    0.9996     ⋯
+   α_area[6]   -0.1557    0.0813    0.0032   634.6095   694.3979    0.9991     ⋯
+   α_area[7]    0.0004    0.1518    0.0053   829.2123   757.5137    0.9994     ⋯
+   α_area[8]    0.0295    0.0667    0.0046   209.9923   333.0731    0.9994     ⋯
+   α_area[9]    0.4709    0.1742    0.0067   677.4702   660.9260    0.9999     ⋯
+  α_area[10]    0.6034    0.0823    0.0060   187.3922   293.5764    1.0005     ⋯
+  α_area[11]   -0.5455    0.1772    0.0067   699.9630   693.3446    0.9994     ⋯
+  α_area[12]   -0.0080    0.0952    0.0039   594.4617   580.1962    1.0005     ⋯
+  α_area[13]    0.8341    0.0982    0.0056   306.3069   461.2639    1.0006     ⋯
+  α_area[14]    0.3705    0.0783    0.0049   248.9317   366.7700    1.0003     ⋯
+  α_area[15]   -0.4442    0.0722    0.0032   499.3334   616.0828    0.9996     ⋯
+      ⋮           ⋮         ⋮         ⋮         ⋮          ⋮          ⋮        ⋱
+                                                     1 column and 5 rows omitted
+
+Quantiles
+  parameters      2.5%     25.0%     50.0%     75.0%     97.5%
+      Symbol   Float64   Float64   Float64   Float64   Float64
+
+  α_bar_area   -0.0747    0.0615    0.1436    0.2190    0.3845
+      τ_area    0.2961    0.3700    0.4264    0.4966    0.6643
+   α_area[1]    0.6305    0.6879    0.7215    0.7549    0.8206
+   α_area[2]   -0.2437   -0.0335    0.0672    0.1626    0.3794
+   α_area[3]    0.0587    0.1535    0.2045    0.2483    0.3675
+   α_area[4]    0.2179    0.2993    0.3467    0.3954    0.4933
+   α_area[5]   -0.0208    0.0635    0.1038    0.1493    0.2377
+   α_area[6]   -0.3123   -0.2089   -0.1568   -0.1010    0.0075
+   α_area[7]   -0.2928   -0.1043   -0.0057    0.1042    0.3162
+   α_area[8]   -0.0965   -0.0129    0.0268    0.0720    0.1646
+   α_area[9]    0.1256    0.3585    0.4687    0.5851    0.8226
+  α_area[10]    0.4413    0.5479    0.6011    0.6570    0.7694
+  α_area[11]   -0.8888   -0.6713   -0.5409   -0.4311   -0.2039
+  α_area[12]   -0.1898   -0.0727   -0.0080    0.0519    0.1844
+  α_area[13]    0.6345    0.7706    0.8337    0.8984    1.0195
+  α_area[14]    0.2065    0.3185    0.3757    0.4235    0.5174
+  α_area[15]   -0.5893   -0.4956   -0.4438   -0.3921   -0.3069
+      ⋮           ⋮         ⋮         ⋮         ⋮         ⋮
+                                                  5 rows omitted</code></pre>
+</div>
+</div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>formula <span class="ot">&lt;-</span> <span class="fu">bf</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  richness <span class="sc">~</span> area <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span> archipelago),</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  sigma <span class="sc">~</span> area <span class="sc">+</span> precip</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    formula, </span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> dat,</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">family =</span> <span class="fu">gaussian</span>(),</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span> <span class="cn">NULL</span>,</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">warmup =</span> <span class="dv">1000</span>,</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">iter =</span> <span class="dv">2000</span>,</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">chains =</span> <span class="dv">4</span>,</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">save_pars =</span> <span class="fu">save_pars</span>(<span class="at">all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div id="22" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 0.000112 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 1.12 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+[1] "Error in sampler$call_sampler(args_list[[i]]) : "
+[2] "  c++ exception (unknown reason)"                
+┌ Warning: RCall.jl: Compiling Stan program...
+│ Start sampling
+│ error occurred during calling the sampler; sampling not done
+└ @ RCall ~/.julia/packages/RCall/0ggIQ/src/io.jl:172</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="1">
+<pre><code>OrderedDict{Symbol, Any} with 8 entries:
+  :formula   =&gt; OrderedDict{Symbol, Any}(:formula=&gt;richness ~ area + :(1 | arch…
+  :data_name =&gt; "dat"
+  :group     =&gt; "archipelago"
+  :nobs      =&gt; 344
+  :ngrps     =&gt; OrderedDict{Symbol, Any}(:archipelago=&gt;16)
+  :autocor   =&gt; nothing
+  :prior     =&gt; 0×10 DataFrame…
+  :algorithm =&gt; "sampling"</code></pre>
+</div>
+</div>
+</section>
+<section id="validation" class="level2">
+<h2 class="anchored" data-anchor-id="validation">Validation</h2>
+<p>Model validation steps for MCMC sampling.</p>
+<div id="24" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(chn)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
