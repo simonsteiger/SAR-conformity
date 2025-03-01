@@ -1,0 +1,165 @@
+---
+engine: julia
+execute:
+  warning: false
+  output: false
+---
+
+## Introduction
+
+## Simulating data
+
+### Set up environment
+
+```{julia}
+using Distributions
+using Random
+using Chain
+using LinearAlgebra
+using DataFrames
+using Turing
+using RCall
+# using Logging maybe needed to suppress Turing's progress meter
+```
+
+```{r}
+library(brms)
+library(tidyverse)
+library(truncdist)
+```
+
+```{julia}
+rng = Xoshiro(521)
+```
+
+```{r}
+set.seed(521)
+```
+
+### Simulation parameters
+
+```{julia}
+n_archipelago = 16
+c = 1
+z = 3
+α_area = rand(Normal(0, 0.5), n_archipelago)
+β_precip = -0.8
+β_area = 0.8
+γ_area = -1.5
+γ_precip = -0.8
+σ_base = 0.0
+```
+
+```{r}
+n_archipelago <- 16
+c <- 1
+z <- 3
+alpha_area <- rnorm(n_archipelago, mean = 0, sd = 0.5)
+beta_precip <- -0.8
+beta_area <- 0.8
+gamma_area <- -1.5
+gamma_precip <- -0.8
+sigma_base <- 0.0
+```
+
+```{julia}
+trunc_pois = truncated(Poisson(20), lower=4)
+islands_per_archipelago = rand(rng, trunc_pois, n_archipelago)
+n_islands = sum(islands_per_archipelago)
+
+archipelago = @chain begin
+	zip(1:n_archipelago, islands_per_archipelago)
+	[fill(i, j) for (i, j) in _]
+	reduce(vcat, _)
+end
+```
+
+```{r}
+#| output: true
+dat <- tibble(
+  archipelago = 1:n_archipelago,
+  n_islands = truncdist::rtrunc(n_archipelago, "pois", a = 4, b = Inf, lambda = 20),
+  precip = rnorm(n_archipelago, mean = 0, sd = 1)
+) %>%
+  tidyr::uncount(n_islands) %>%
+  mutate(
+    area = rnorm(nrow(.), mean = 0, sd = 1),
+    island = seq_len(nrow(.))
+  )
+
+mu <- alpha_area[dat$archipelago] + dat$area * beta_area
+sigma <- exp(sigma_base + gamma_area * dat$area + gamma_precip * dat$precip)
+dat$richness <- rnorm(nrow(dat), mean = mu, sd = sigma)
+dat
+```
+
+```{julia}
+#| output: true
+area = rand(rng, Normal(0, 1), n_islands)
+precip = rand(rng, Normal(0, 1), n_archipelago)
+
+richness = let
+	μ = @. α_area[archipelago] + area * β_area
+	σ = @. exp(σ_base + γ_area * area + γ_precip * precip[archipelago])
+	rand(MvNormal(μ, σ))
+end
+```
+
+## Model
+
+```{r}
+#| output: true
+formula <- bf(
+  richness ~ area + (1 | archipelago),
+  sigma ~ area + precip
+)
+
+model <- brm(
+	formula, 
+	data = dat,
+	family = gaussian(),
+	prior = NULL,
+    warmup = 1000,
+	iter = 2000,
+	chains = 4,
+	save_pars = save_pars(all = TRUE)
+  )
+
+summary(model)
+```
+
+```{julia}
+@model function distributional_model(archipelago, area, precip)
+	j = length(unique(archipelago))
+
+	# Priors
+	α_bar_area ~ Normal(0, 1)
+	τ_area ~ Exponential(1)
+	α_area ~ filldist(Normal(α_bar_area, τ_area), j)
+
+	β_area ~ Normal(0, 1)
+
+	σ_base ~ Cauchy(0, 1)
+	γ_area ~ Normal(0, 0.25)
+	γ_precip ~ Normal(0, 0.25)
+
+	# Likelihood
+	μ = @. α_area[archipelago] + β_area * area
+	σ = @. exp(σ_base + γ_area * area + γ_precip * precip[archipelago])
+	richness ~ MvNormal(μ, σ.^2)
+
+	return (; μ, σ)
+end
+```
+
+```{julia}
+#| output: true
+prior_model = distributional_model(archipelago, area, precip)
+conditioned_model = prior_model | (richness=richness,)
+chn = sample(conditioned_model, NUTS(), 1000)
+chn
+```
+
+## Validation
+
+Model validation steps for MCMC sampling.

@@ -19,10 +19,19 @@ library("raster")
 ### ----- 2. Load data ----- ###
 ################################
 
-dat <- read.csv("SAR_species_matrix.csv")
-isl <- read.csv("SAR_env-data_islets.csv")
-atoll <- read.csv("SAR_env-data_atolls.csv")
+dat <- read.csv("data/SAR_species_matrix.csv")
+isl <- read.csv("data/SAR_env-data_islets.csv")
+atoll <- read.csv("data/SAR_env-data_atolls.csv")
 
+# Open netCDF file from NOAA gridded long-term mean annual rainfall data
+cdf <- nc_open("data/precip.mon.ltm.1981-2010.nc")
+
+# Extract variables from netCDF file
+lon <- ncvar_get(cdf, "lon")
+lat <- ncvar_get(cdf, "lat")
+rainf <- ncvar_get(cdf, "precip")
+
+nc_close(cdf)
 
 ###########################################
 ### ----- 3. Format, prepare data ----- ###
@@ -65,16 +74,6 @@ atoll <- atoll %>% mutate(isolation = pmin(distance_high_island_km, distance_con
 ########################################################
 ### ----- 4. Create map plot of studied atolls ----- ###
 ########################################################
-
-# Open netCDF file from NOAA gridded long-term mean annual rainfall data
-cdf <- nc_open("precip.mon.ltm.1981-2010.nc")
-
-# Extract variables from netCDF file
-lon <- ncvar_get(cdf, "lon")
-lat <- ncvar_get(cdf, "lat")
-rainf <- ncvar_get(cdf, "precip")
-
-nc_close(cdf)
 
 # Calculate long-term average of rainfall
 rainf <- apply(rainf, c(1, 2), mean, na.rm = TRUE)
