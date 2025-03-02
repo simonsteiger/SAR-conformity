@@ -1,0 +1,128 @@
+---
+engine: julia
+execute:
+  warning: false
+  output: false
+---
+
+## Introduction
+
+The purpose of this tutorial is to demonstrate that by modelling the random error $\sigma$ we can estimate species-area relationships across the full spectrum of areas, i.e., without relying on introducing breakpoints.
+
+The `R` code provided here covers for the following steps:
+
+1. Simulation of species richness for islands nested in archipelagos
+2. Visual inspection of the simulated data
+3. Modeling the species-area relationship
+4. Validation of the results
+
+## Set up
+
+We begin by loading the required packages.
+
+```{r}
+library(brms)
+library(tidyverse)
+library(truncdist)
+```
+
+## Simulating data
+
+We begin by setting the fixed parameters for the simulation.
+In the notation below $c$ represents an archipelago intercept and $z$ the coefficient for island area $A$ onto species richness $S$.
+
+This gives us Arrhenius law:
+
+$$
+S = c A^z
+$$
+
+Underlying the $c$ are the hyperparameters $\bar{c}$, the mean of all archipelago intercepts, and $\tau$ the variation of atoll intercepts.
+
+The parameters which together will determine the random error $\sigma$ are the baseline error $\sigma_{base}$, $\gamma_{area}$ and $\gamma_{precip}$.
+
+```{r}
+n_archipelago <- 16
+c_bar <- 1
+tau <- 0.5
+c <- rnorm(n_archipelago, mean = c_bar, sd = tau)
+z <- 3
+gamma_area <- -1.5
+gamma_precip <- -0.8
+sigma_base <- 0.0
+```
+
+We then draw the number of islands for each archipelago from a Poisson distribution with $\lambda = 20$ and truncated at a lower bound of $4$. <!-- truncation is probably redundant given the distribution of Poisson(20) -->
+
+```{r}
+#| output: true
+dat <- tibble(
+  archipelago = 1:n_archipelago,
+  n_islands = truncdist::rtrunc(n_archipelago, "pois", a = 4, b = Inf, lambda = 20),
+  precip = rnorm(n_archipelago, mean = 0, sd = 1)
+) %>%
+  tidyr::uncount(n_islands) %>%
+  mutate(
+    area = rnorm(nrow(.), mean = 0, sd = 1),
+    island = seq_len(nrow(.))
+  )
+```
+
+Finally, we simulate the species `richness` for each island by taking into account each archipelago's intercept and precipitation values.
+
+```{r}
+mu <- c[dat$archipelago] + dat$area * z
+sigma <- exp(sigma_base + gamma_area * dat$area + gamma_precip * dat$precip)
+dat$richness <- rnorm(nrow(dat), mean = mu, sd = sigma)
+dat
+```
+
+## Model
+
+We can use the `brms` package to specify the distributional model with `R`'s widely-used formula syntax.
+
+Note that the `save_pars = save_pars(all = TRUE)` is only necessary if model evaluation techniques such as leave-one-out crossvalidation `loo()` are to be used.
+
+```{r}
+#| output: true
+formula <- bf(
+  richness ~ area + (1 | archipelago),
+  sigma ~ area + precip
+)
+
+model <- brm(
+	formula, 
+	data = dat,
+	family = gaussian(),
+	prior = NULL,
+    warmup = 1000,
+	iter = 2000,
+	chains = 4,
+	save_pars = save_pars(all = TRUE)
+  )
+
+summary(model)
+```
+
+The mean parameter estimates match the inputs to the simulation, but we should only move forward with this analysis after having validated that there were no computational issues with MCMC sampling.
+If the sampling algorithms at the root of our inference were to show problematic behaviour, we should not interpret our results at all.
+
+## Validation
+
+A first visual check to see if there were any computational issues is to create a so-called trace plot by showing the iteration number on the x-axis against the sampled parameter value on the y-axis (left column below).
+
+Trace plots showing long sequences of increasing or decreasing parameter values for consecutive iterations indicate problems. 
+Instead, the parameter values for each chain should randomly fluctuate around a common value, indicating low autocorrelation and convergence to the true parameter value.
+
+The trace plots below indicate that there were no computational problems.
+
+```{r}
+# I'll leave the plotting and validation to you
+```
+
+A numerical summary for how well chains have converged is $\hat{R}$, which will confirm what we've already suspected from visually inspecting the trace plots.
+Values indicative of convergence are  $1 < \hat{R} < 1.01$.
+
+```{r}
+# Maybe code about Rhat
+```

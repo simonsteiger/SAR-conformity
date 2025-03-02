@@ -1,0 +1,161 @@
+---
+engine: julia
+execute:
+  warning: false
+  output: false
+---
+
+## Introduction
+
+The purpose of this tutorial is to demonstrate that by modelling the random error $\sigma$ we can estimate species-area relationships across the full spectrum of areas, i.e., without relying on introducing breakpoints.
+
+The `julia` code provided here covers for the following steps:
+
+1. Simulation of species richness for islands nested in archipelagos
+2. Visual inspection of the simulated data
+3. Modeling the species-area relationship
+4. Validation of the results
+
+## Set up
+
+We begin by loading the required packages.
+
+```{julia}
+using Distributions
+using Turing
+using StatsPlots
+using DataFrames
+```
+
+## Simulating data
+
+We begin by setting the fixed parameters for the simulation.
+In the notation below $c$ represents an archipelago intercept and $z$ the coefficient for island area $A$ onto species richness $S$.
+
+This gives us Arrhenius law:
+
+$$
+S = c A^z
+$$
+
+Underlying the $c$ are the hyperparameters $\bar{c}$, the mean of all archipelago intercepts, and $\tau$ the variation of atoll intercepts.
+
+The parameters which together will determine the random error $\sigma$ are the baseline error $\sigma_{base}$, $\gamma_{area}$ and $\gamma_{precip}$.
+
+```{julia}
+n_archipelago = 16
+c̄ = 0.0
+τ = 0.5
+c = rand(Normal(c̄, τ), n_archipelago)
+z = 3.0
+γ_area = -1.5
+γ_precip = -0.8
+σ_base = 0.0
+```
+
+We then draw the number of islands for each archipelago from a Poisson distribution with $\lambda = 20$ and truncated at a lower bound of $4$. <!-- truncation is probably redundant given the distribution of Poisson(20) -->
+
+```{julia}
+trunc_pois = truncated(Poisson(20), lower=4)
+islands_per_archipelago = rand(trunc_pois, n_archipelago)
+n_islands = sum(islands_per_archipelago)
+
+archipelago = reduce(vcat, fill.(1:n_archipelago, islands_per_archipelago))
+```
+
+Finally, we simulate the species `richness` for each island by taking into account each archipelago's intercept and precipitation values.
+
+```{julia}
+area = rand(Normal(0, 1), n_islands)
+precip = rand(Normal(0, 1), n_archipelago)
+
+richness = let j = archipelago
+	μ = @. c[j] + area * z
+	σ = @. exp(σ_base + γ_area * area + γ_precip * precip[j])
+	rand(MvNormal(μ, σ))
+end
+```
+
+## Model
+
+We use the probabilistic programming language Turing.jl to specify the model.
+The more lengthy but also more explicit model syntax reveals that the likelihood in our model directly matches the data-generating process.
+
+```{julia}
+@model function distributional_model(archipelago, area, precip)
+	j = archipelago
+	J = length(unique(archipelago))
+
+	# Priors
+	c̄ ~ Normal(0, 1)
+	τ ~ Exponential(1)
+	c ~ filldist(Normal(c̄, τ), J)
+
+	z ~ Normal(0, 1)
+
+	σ_base ~ Cauchy(0, 1)
+	γ_area ~ Normal(0, 0.25)
+	γ_precip ~ Normal(0, 0.25)
+
+	# Likelihood
+	μ = @. c[j] + z * area
+	σ = @. exp(σ_base + γ_area * area + γ_precip * precip[j])
+	richness ~ MvNormal(μ, σ)
+
+	return (; μ, σ)
+end
+```
+
+Using the model function `distributional_model()` we create the unconditioned model by passing the input data `archipelago`, `area`, and `precip`.
+In the next step, we use the `condition` syntax `|` to condition the prior model on the observed outcome data.
+
+```julia
+prior_model = distributional_model(archipelago, area, precip)
+conditioned_model = prior_model | (richness=richness,)
+chn = sample(conditioned_model, NUTS(), 1000)
+```
+
+```{julia}
+#| include: false
+prior_model = distributional_model(archipelago, area, precip)
+conditioned_model = prior_model | (richness=richness,)
+chn = sample(conditioned_model, NUTS(), MCMCThreads(), 1000, 4)
+```
+
+Let's first inspect the means and quantiles for the parameter estimates.
+
+```{julia}
+#| output: true
+DataFrame(describe(chn)[2])
+```
+
+The mean parameter estimates match the inputs to the simulation, but we should only move forward with this analysis after having validated that there were no computational issues with MCMC sampling.
+If the sampling algorithms at the root of our inference were to show problematic behaviour, we should not interpret our results at all.
+
+## Validation
+
+A first visual check to see if there were any computational issues is to create a so-called trace plot by showing the iteration number on the x-axis against the sampled parameter value on the y-axis (left column below).
+
+Trace plots showing long sequences of increasing or decreasing parameter values for consecutive iterations indicate problems. 
+Instead, the parameter values for each chain should randomly fluctuate around a common value, indicating low autocorrelation and convergence to the true parameter value.
+
+The trace plots below indicate that there were no computational problems.
+
+```{julia}
+#| output: true
+#| label: fig-traceplot
+#| fig-cap: MCMC trace plots for the parameters from the model fit to the simulated data. Note that individual island intercepts are ommitted here to save space.
+params = ["c̄", "τ", "z", "σ_base", "γ_area", "γ_precip"]
+plot(chn[:, params, :], size=(700, 1200))
+```
+
+A numerical summary for how well chains have converged is $\hat{R}$, which will confirm what we've already suspected from visually inspecting the trace plots.
+Values indicative of convergence are  $1 < \hat{R} < 1.01$.
+
+```{julia}
+#| output: true
+summary_df = DataFrame(describe(chn)[1])
+maximum(summary_df.rhat) |> x -> round(x, digits=3)
+```
+
+For a more extensive toolkit of MCMC diagnostics, see [ArviZ.jl](https://arviz-devs.github.io/ArviZ.jl/stable/api/diagnostics/).
