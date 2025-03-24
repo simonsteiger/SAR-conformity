@@ -7,7 +7,7 @@ execute:
 
 ## Introduction
 
-The purpose of this tutorial is to demonstrate that by modelling the random error $\sigma$ we can estimate species-area relationships across the full spectrum of areas, i.e., without relying on introducing breakpoints.
+The purpose of this tutorial is to demonstrate how to conduct a simple Bayesian Distributional Model, i.e., modelling environmental effects on the random error $\sigma$, which allows investigating the confomity of species-area relationships.
 
 The `R` code provided here covers for the following steps:
 
@@ -22,6 +22,7 @@ We begin by loading the required packages.
 
 ```{r}
 library(brms)
+library(coda)
 library(tidyverse)
 library(truncdist)
 ```
@@ -79,7 +80,7 @@ dat
 
 ## Model
 
-We can use the `brms` package to specify the distributional model with `R`'s widely-used formula syntax.
+We can use the `brms` package to specify the distributional model with `R`'s widely-used formula syntax. We use the bf() function to specify our model formula. We define a main effect of area on the mean species richness of an island, and add the archipelago as a random intercept (1 | archipelago). To test for effects on the sigma-parameter (i.e. the 'noise' or 'conformity' of the main effect relationship richness~area, we simply add a second line to the formula and specify the predictors for sigma.
 
 Note that the `save_pars = save_pars(all = TRUE)` is only necessary if model evaluation techniques such as leave-one-out crossvalidation `loo()` are to be used.
 
@@ -95,13 +96,14 @@ model <- brm(
 	data = dat,
 	family = gaussian(),
 	prior = NULL,
-    warmup = 1000,
+	warmup = 1000,
 	iter = 2000,
 	chains = 4,
 	save_pars = save_pars(all = TRUE)
   )
 
 summary(model)
+
 ```
 
 The mean parameter estimates match the inputs to the simulation, but we should only move forward with this analysis after having validated that there were no computational issues with MCMC sampling.
@@ -109,20 +111,29 @@ If the sampling algorithms at the root of our inference were to show problematic
 
 ## Validation
 
-A first visual check to see if there were any computational issues is to create a so-called trace plot by showing the iteration number on the x-axis against the sampled parameter value on the y-axis (left column below).
+Just like frequentist, linear models, Bayesian models also require some thorough investigation and validation before extracting and plotting the estimates. This short tutorial is not intended to provide a comprehensive introduction into best practiceses of Bayesian model validation. Instead, we refer interested readers to some key references, such as the WAMBS checklist: https://doi.org/10.1037/met0000065.
 
-Trace plots showing long sequences of increasing or decreasing parameter values for consecutive iterations indicate problems. 
-Instead, the parameter values for each chain should randomly fluctuate around a common value, indicating low autocorrelation and convergence to the true parameter value.
-
-The trace plots below indicate that there were no computational problems.
+Below we provide a short code with some key built-in functions of the 'brms' package to assess our Bayesian distributional model.
+After having evaluated the model, we can plot the conditional effects on the mean (dpar="mu") and on the distributional sigma parameter (dpar="sigma") by calling the conditional_effects() function.
 
 ```{r}
-# I'll leave the plotting and validation to you
-```
+plot(model)
 
-A numerical summary for how well chains have converged is $\hat{R}$, which will confirm what we've already suspected from visually inspecting the trace plots.
-Values indicative of convergence are  $1 < \hat{R} < 1.01$.
+pp_check(model, type = "dens_overlay")
+pp_check(model, type = "scatter_avg")
+pp_check(model, type = "stat_2d")
+pp_check(model, type = "ribbon")
+pp_check(model, type = "stat", var = "stat")
 
-```{r}
-# Maybe code about Rhat
+loo(model, moment_match = TRUE)
+
+coda::gelman.diag(as.mcmc(model))
+coda::geweke.diag(as.mcmc(model))
+
+conditional_effects(model, dpar = "mu")
+conditional_effects(model, dpar = "sigma")
+
+posterior_draws <- as_draws_df(model, variable = "^b_", regex = TRUE) %>% as.data.frame()
+fixed_effects <- fixef(model)
+
 ```
