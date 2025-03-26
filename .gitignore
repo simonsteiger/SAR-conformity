@@ -5,3 +5,4 @@
 .Rprofile
 .Rproj.user/
 *_files/
+!SAR_workflow.png
