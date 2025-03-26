@@ -34,7 +34,6 @@ library("coda")
 library("sf")
 library("rnaturalearth")
 library("rnaturalearthdata")
-library("ncdf4")
 library("raster")
 
 ################################
@@ -88,28 +87,8 @@ atoll <- atoll %>% mutate(isolation = pmin(distance_high_island_km, distance_con
 ### ----- 4. Create map plot of studied atolls ----- ###
 ########################################################
 
-# Open netCDF file from NOAA gridded long-term mean annual rainfall data
-cdf <- nc_open("precip.mon.ltm.1981-2010.nc")
-
-# Extract variables from netCDF file
-lon <- ncvar_get(cdf, "lon")
-lat <- ncvar_get(cdf, "lat")
-rainf <- ncvar_get(cdf, "precip")
-
-nc_close(cdf)
-
-# Calculate long-term average of rainfall
-rainf <- apply(rainf, c(1, 2), mean, na.rm = TRUE)
-
-# Create raster
-rainf_raster <- raster(t(rainf), 
-                       xmn = min(lon), xmx = max(lon), 
-                       ymn = min(lat), ymx = max(lat), 
-                       crs = CRS("+proj=longlat +datum=WGS84"))
-
-# Convert Raster to Data Frame
-rainf_df <- as.data.frame(rasterToPoints(rainf_raster))
-colnames(rainf_df) <- c("lon", "lat", "rainfall")
+# Load rainfall raster file
+rainf_df <- read.csv("rainfall_raster.csv")
 
 # Load world map data
 mapWorld <- ne_countries(scale = "medium", returnclass = "sf")

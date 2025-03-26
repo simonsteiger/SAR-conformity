@@ -1296,13 +1296,6 @@
       ],
       "Hash": "c7241e6be9d6df551a2e539a50f5c875"
     },
-    "ncdf4": {
-      "Package": "ncdf4",
-      "Version": "1.24",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "2e2f7c6faeb943039f9f5793eab83482"
-    },
     "nleqslv": {
       "Package": "nleqslv",
       "Version": "3.3.5",
