@@ -1,5 +1,4 @@
 ---
-engine: julia
 execute:
   warning: false
   output: false
@@ -80,12 +79,14 @@ dat
 
 ## Model
 
-We can use the `brms` package to specify the distributional model with `R`'s widely-used formula syntax. We use the bf() function to specify our model formula. We define a main effect of area on the mean species richness of an island, and add the archipelago as a random intercept (1 | archipelago). To test for effects on the sigma-parameter (i.e. the 'noise' or 'conformity' of the main effect relationship richness~area, we simply add a second line to the formula and specify the predictors for sigma.
+We can use the `brms` package to specify the distributional model with `R`'s widely-used formula syntax. 
+We use the bf() function to specify our model formula. 
+We define a main effect of area on the mean species richness of an island, and add the archipelago as a random intercept (1 | archipelago). 
+To test for effects on the sigma-parameter (i.e. the 'noise' or 'conformity' of the main effect relationship $\text{richness} \sim \text{area}$), we simply add a second line to the formula and specify the predictors for sigma.
 
 Note that the `save_pars = save_pars(all = TRUE)` is only necessary if model evaluation techniques such as leave-one-out crossvalidation `loo()` are to be used.
 
 ```{r}
-#| output: true
 formula <- bf(
   richness ~ area + (1 | archipelago),
   sigma ~ area + precip
@@ -101,9 +102,10 @@ model <- brm(
 	chains = 4,
 	save_pars = save_pars(all = TRUE)
   )
+```
 
+```{r}
 summary(model)
-
 ```
 
 The mean parameter estimates match the inputs to the simulation, but we should only move forward with this analysis after having validated that there were no computational issues with MCMC sampling.
@@ -111,7 +113,7 @@ If the sampling algorithms at the root of our inference were to show problematic
 
 ## Validation
 
-Just like frequentist, linear models, Bayesian models also require some thorough investigation and validation before extracting and plotting the estimates. This short tutorial is not intended to provide a comprehensive introduction into best practiceses of Bayesian model validation. Instead, we refer interested readers to some key references, such as the WAMBS checklist: https://doi.org/10.1037/met0000065.
+Just like frequentist, linear models, Bayesian models also require some thorough investigation and validation before extracting and plotting the estimates. This short tutorial is not intended to provide a comprehensive introduction into best practiceses of Bayesian model validation. Instead, we refer interested readers to some key references, such as [the WAMBS checklist](https://doi.org/10.1037/met0000065).
 
 Below we provide a short code with some key built-in functions of the 'brms' package to assess our Bayesian distributional model.
 After having evaluated the model, we can plot the conditional effects on the mean (dpar="mu") and on the distributional sigma parameter (dpar="sigma") by calling the conditional_effects() function.

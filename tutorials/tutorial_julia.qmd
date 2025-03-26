@@ -139,52 +139,8 @@ If the sampling algorithms at the root of our inference were to show problematic
 
 ## Validation
 
-A first visual check to see if there were any computational issues is to create a so-called trace plot by showing the iteration number on the x-axis against the sampled parameter value on the y-axis (left column below).
+Just like frequentist, linear models, Bayesian models also require some thorough investigation and validation before extracting and plotting the estimates.
+This short tutorial is not intended to provide a comprehensive introduction into best practiceses of Bayesian model validation.
+Instead, we refer interested readers to some key references, such as the [WAMBS checklist](https://doi.org/10.1037/met0000065).
 
-Trace plots showing long sequences of increasing or decreasing parameter values for consecutive iterations indicate problems. 
-Instead, the parameter values for each chain should randomly fluctuate around a common value, indicating low autocorrelation and convergence to the true parameter value.
-
-The trace plots below indicate that there were no computational problems.
-
-```{julia}
-#| output: true
-#| label: fig-traceplot
-#| fig-cap: MCMC trace plots for the parameters from the model fit to the simulated data. Note that individual island intercepts are ommitted here to save space.
-params = ["c̄", "τ", "z", "σ_base", "γ_area", "γ_precip"]
-plot(chn[:, params, :], size=(700, 1200))
-```
-
-A numerical summary for how well chains have converged is $\hat{R}$, which will confirm what we've already suspected from visually inspecting the trace plots.
-Values indicative of convergence are  $1 < \hat{R} < 1.01$.
-
-```{julia}
-#| output: true
-summary_df = DataFrame(describe(chn)[1])
-maximum(summary_df.rhat) |> x -> round(x, digits=3)
-```
-
-For a more extensive toolkit of MCMC diagnostics, see [ArviZ.jl](https://arviz-devs.github.io/ArviZ.jl/stable/api/diagnostics/).
-
-## Posterior retrodictive check
-
-A common way to check if the model captured the data-generating process well is to use the model parameters to "retrodict" the data.
-If the retrodicted data systematically mismatch the real data, we have failed to capture an important part of the data-generating process.
-Depending on the severity of this mismatch and the nature of our research question, this might prompt us to go back and refine the model.
-
-```{julia}
-#| output: true
-preds = @chain predict(model, chn) begin
-	DataFrame(_)
-	combine(_, names(_, Float64) .=> (x -> Ref(quantile(x, [0.1, 0.5, 0.9]))) => identity)
-	stack(_, All())
-	_[sortperm(area), :]
-end
-
-q10, q50, q90 = [getindex.(preds.value, i) for i in 1:3]
-yerror = (q50 .- q10, q90 .- q50)
-
-p = plot()
-scatter!(sort(area), richness[sortperm(area)], label=false)
-scatter!(sort(area), q50, yerror=yerror, label=false)
-p
-```
+For a more extensive toolkit of MCMC and other model diagnostics, see [ArviZ.jl](https://arviz-devs.github.io/ArviZ.jl/stable/api/diagnostics/) and [MCMCChains.jl](https://turinglang.org/MCMCChains.jl/stable/).
