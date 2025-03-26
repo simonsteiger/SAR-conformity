@@ -11,8 +11,7 @@
 
 ## Reproducibility:
 #   This project uses the 'renv' package to manage package dependencies and ensure a reproducible computational
-#   environment. To set up the environment on your machine, please run:
-renv::restore()
+#   environment. To set up the environment on your machine, please run: renv::restore()
 #   This command reads the 'renv.lock' file and installs the exact versions of packages used in this analysis.
 
 # Data:
@@ -40,9 +39,9 @@ library("raster")
 ### ----- 2. Load data ----- ###
 ################################
 
-dat <- read.csv("SAR_species_matrix.csv")
-isl <- read.csv("SAR_env-data_islets.csv")
-atoll <- read.csv("SAR_env-data_atolls.csv")
+dat <- read.csv("data/SAR_species_matrix.csv")
+isl <- read.csv("data/SAR_env-data_islets.csv")
+atoll <- read.csv("data/SAR_env-data_atolls.csv")
 
 
 ###########################################
@@ -88,7 +87,7 @@ atoll <- atoll %>% mutate(isolation = pmin(distance_high_island_km, distance_con
 ########################################################
 
 # Load rainfall raster file
-rainf_df <- read.csv("rainfall_raster.csv")
+rainf_df <- read.csv("data/rainfall_raster.csv")
 
 # Load world map data
 mapWorld <- ne_countries(scale = "medium", returnclass = "sf")
