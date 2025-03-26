@@ -1,3 +1,25 @@
+##### ----------------------------------------------------------------------------------------------------------
+##### TITLE:        DATA ANALYSIS AND STATISTICAL CODE FOR: CONFORMITY OF SPECIES-AREA RELATIONSHIPS IN ATOLLS
+##### AUTHORS:      SEBASTIAN STEIBL, SIMON STEIGER, LUIS VALENTE, JAMES C. RUSSELL
+##### LAST EDITED:  26 Mar 2024
+##### ----------------------------------------------------------------------------------------------------------
+
+## Description:
+#   This script performs the statistical analysis for Steibl et al. (2025) Rainfall increases conformity and strength of
+#   species-area relationships in atolls. It loads and pre-processes the data, executes the analysis, and generates tables
+#   and figures for the manuscript.
+
+## Reproducibility:
+#   This project uses the 'renv' package to manage package dependencies and ensure a reproducible computational
+#   environment. To set up the environment on your machine, please run:
+renv::restore()
+#   This command reads the 'renv.lock' file and installs the exact versions of packages used in this analysis.
+
+# Data:
+#   The data used for this analysis is stored in the 'data/' directory.
+#   We use the 'here' package to construct file paths relative to the project root,
+#   ensuring that data files are correctly located regardless of the working directory.
+
 
 ####################################
 ### 1. ----- Load packages ----- ###
@@ -19,19 +41,10 @@ library("raster")
 ### ----- 2. Load data ----- ###
 ################################
 
-dat <- read.csv("data/SAR_species_matrix.csv")
-isl <- read.csv("data/SAR_env-data_islets.csv")
-atoll <- read.csv("data/SAR_env-data_atolls.csv")
+dat <- read.csv("SAR_species_matrix.csv")
+isl <- read.csv("SAR_env-data_islets.csv")
+atoll <- read.csv("SAR_env-data_atolls.csv")
 
-# Open netCDF file from NOAA gridded long-term mean annual rainfall data
-cdf <- nc_open("data/precip.mon.ltm.1981-2010.nc")
-
-# Extract variables from netCDF file
-lon <- ncvar_get(cdf, "lon")
-lat <- ncvar_get(cdf, "lat")
-rainf <- ncvar_get(cdf, "precip")
-
-nc_close(cdf)
 
 ###########################################
 ### ----- 3. Format, prepare data ----- ###
@@ -74,6 +87,16 @@ atoll <- atoll %>% mutate(isolation = pmin(distance_high_island_km, distance_con
 ########################################################
 ### ----- 4. Create map plot of studied atolls ----- ###
 ########################################################
+
+# Open netCDF file from NOAA gridded long-term mean annual rainfall data
+cdf <- nc_open("precip.mon.ltm.1981-2010.nc")
+
+# Extract variables from netCDF file
+lon <- ncvar_get(cdf, "lon")
+lat <- ncvar_get(cdf, "lat")
+rainf <- ncvar_get(cdf, "precip")
+
+nc_close(cdf)
 
 # Calculate long-term average of rainfall
 rainf <- apply(rainf, c(1, 2), mean, na.rm = TRUE)
@@ -151,7 +174,7 @@ p1 <- map +
 p1
 
 # Export as SVG vector file
-ggsave(p1, filename = "fig01_atoll_map.svg", dpi = 300, width = 158.5, height = 70, units = "mm")
+#ggsave(p1, filename = "fig01_atoll_map.svg", dpi = 300, width = 158.5, height = 70, units = "mm")
 
 ################################################
 ### ----- 5. Calculate alpha diversity ----- ###
@@ -202,6 +225,23 @@ isl <- isl %>% left_join(., atoll[,c("atoll",
 isl$z.area <- (log(isl$area_sqkm) - mean(log(isl$area_sqkm))) / sd(log(isl$area_sqkm))
 isl$z.rainfall <- (log(isl$annual_precipitation_mm) - mean(log(isl$annual_precipitation_mm))) / sd(log(isl$annual_precipitation_mm))
 isl$z.cyclones <- (log(isl$hurricanes_50km+1) - mean(log(isl$hurricanes_50km+1))) / sd(log(isl$hurricanes_50km+1))
+
+
+
+p <- ggplot(dat = isl, aes(x = area_sqkm, y = ric)) +
+  geom_point(shape = 21, size = 1.5, stroke = 1.2, alpha = 0.8) +
+  geom_smooth(method = "lm", fill = "#E3E3E3", color = "#C96868", linewidth = 1) +
+  scale_x_continuous(trans = "log10",
+                     name = "Island area [ha]") +
+  scale_y_continuous(trans = "log10",
+                     name = "Species richness") +
+  guides(x = "axis_truncated", y = "axis_truncated") +
+  theme_classic() +
+  theme(axis.text = element_text(size = 7),
+        axis.title = element_text(size = 8)) +
+  facet_wrap(.~atoll)
+
+#ggsave(p, filename = "atoll-wise_SAR.svg", dpi = 300, width = 159, height = 90, unit = "mm")
 
 ##########################################################################################################
 ### ----- 6. Assess effect of environmental drivers on slope of Species-Area Relationships (SAR) ----- ###
@@ -402,7 +442,7 @@ p2 <- p2.1 / (p2.2 + p2.3 + p2.4)
 p2
 
 # Save and export as SVG vector file
-ggsave(p2, filename = "fig02_island_SAR.svg", dpi = 300, width = 158.5, height = 140, units = "mm")
+#ggsave(p2, filename = "fig02_island_SAR.svg", dpi = 300, width = 158.5, height = 140, units = "mm")
 
 #########################################################################
 ### ----- 8. Evaluate atoll-level SAR and environmental drivers ----- ###
@@ -583,4 +623,4 @@ p3 <- p3.1 + p3.3 + p3.4
 p3
 
 # Export as SVG vector file
-ggsave(p3, filename = "fig03_atoll_SAR.svg", dpi = 300, width = 158.5, height = 70, units = "mm")
+#ggsave(p3, filename = "fig03_atoll_SAR.svg", dpi = 300, width = 158.5, height = 70, units = "mm")
