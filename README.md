@@ -24,7 +24,7 @@ Abstract
 
 To run the core data analysis:
 
-1. Install the R programming language ([Windows](https://cran.r-project.org/bin/windows/), [MacOS](https://cran.r-project.org/bin/macosx/), [Linux](https://cran.r-project.org/bin/linux/))
+1. Install the R programming language ([Windows](https://cran.r-project.org/bin/windows/), [MacOS](https://cran.r-project.org/bin/macosx/), [Linux](https://cran.r-project.org/bin/linux/)) (Version 4.4.0 or later)
 2. Install the `renv` package by running `install.packages("renv")`
 3. Open an R console in the project folder `SAR-conformity`
 4. Run `renv::activate()` and restart the R session
