@@ -1,7 +1,7 @@
-##### ----------------------------------------------------------------------------------------------------------
+  ##### ----------------------------------------------------------------------------------------------------------
 ##### TITLE:        DATA ANALYSIS AND STATISTICAL CODE FOR: CONFORMITY OF SPECIES-AREA RELATIONSHIPS IN ATOLLS
 ##### AUTHORS:      SEBASTIAN STEIBL, SIMON STEIGER, LUIS VALENTE, JAMES C. RUSSELL
-##### LAST EDITED:  26 Mar 2024
+##### LAST EDITED:  28 Mar 2025
 ##### ----------------------------------------------------------------------------------------------------------
 
 ## Description:
@@ -11,8 +11,7 @@
 
 ## Reproducibility:
 #   This project uses the 'renv' package to manage package dependencies and ensure a reproducible computational
-#   environment. To set up the environment on your machine, please run:
-renv::restore()
+#   environment. To set up the environment on your machine, please run: renv::restore()
 #   This command reads the 'renv.lock' file and installs the exact versions of packages used in this analysis.
 
 # Data:
@@ -25,16 +24,25 @@ renv::restore()
 ### 1. ----- Load packages ----- ###
 ####################################
 
+# set directory
+library("here")
+
+# tidy and plotting
 library("tidyverse")
 library("ggh4x")
-library("here")
 library("patchwork")
-library("brms")
-library("coda")
+  
+# map and raster plotting packages
 library("sf")
 library("rnaturalearth")
 library("rnaturalearthdata")
 library("raster")
+  
+# Bayesian modelling
+library("brms")
+library("coda")
+
+  
 
 ################################
 ### ----- 2. Load data ----- ###
@@ -43,6 +51,7 @@ library("raster")
 dat <- read.csv("SAR_species_matrix.csv")
 isl <- read.csv("SAR_env-data_islets.csv")
 atoll <- read.csv("SAR_env-data_atolls.csv")
+
 
 
 ###########################################
@@ -82,6 +91,8 @@ rm(n_isl) # no longer needed, keep tidy
 
 # Calculate isolation of atolls based on minimum distance of either to nearest high island or nearest continental landmass
 atoll <- atoll %>% mutate(isolation = pmin(distance_high_island_km, distance_continent_km))
+
+
 
 ########################################################
 ### ----- 4. Create map plot of studied atolls ----- ###
@@ -155,6 +166,8 @@ p1
 # Export as SVG vector file
 #ggsave(p1, filename = "fig01_atoll_map.svg", dpi = 300, width = 158.5, height = 70, units = "mm")
 
+
+
 ################################################
 ### ----- 5. Calculate alpha diversity ----- ###
 ################################################
@@ -219,46 +232,15 @@ p <- ggplot(dat = isl, aes(x = area_sqkm, y = ric)) +
   theme(axis.text = element_text(size = 7),
         axis.title = element_text(size = 8)) +
   facet_wrap(.~atoll)
+p
 
 #ggsave(p, filename = "atoll-wise_SAR.svg", dpi = 300, width = 159, height = 90, unit = "mm")
 
-##########################################################################################################
-### ----- 6. Assess effect of environmental drivers on slope of Species-Area Relationships (SAR) ----- ###
-##########################################################################################################
 
-# Define model
-mod_SAR.slope <- bf(log(ric) ~ 1 + z.area * (z.rainfall + z.cyclones) + (1 | atoll))
 
-# Run model
-SAR.slope.model <- brm(formula = mod_SAR.slope,
-                       data = isl,
-                       family = gaussian(),
-                       chains = 4,
-                       warmup = 2500,
-                       iter = 5000,
-                       save_pars = save_pars(all = TRUE))
-# Evaluate model
-plot(SAR.slope.model)
-pp_check(SAR.slope.model, type = "dens_overlay") + theme_classic()
-gelman.diag(as.mcmc(SAR.slope.model)[,c(1:6)], multivariate = FALSE)
-geweke.diag(as.mcmc(SAR.slope.model)[,c(1:6)])
-
-# Leave-One-Out (LOO) cross-validation 
-loo(SAR.slope.model)
-
-# Explore model output
-summary(SAR.slope.model)
-bayes_R2(SAR.slope.model)
-
-# Test hypotheses that rainfall and/or cyclones influence the slope of SAR within atolls
-hypothesis(SAR.slope.model, "z.area:z.rainfall > 0")
-hypothesis(SAR.slope.model, "z.area:z.cyclones < 0")
-
-conditional_effects(SAR.slope.model)
-
-#################################################################################################################
-### ----- 7. Assess effect of environmental drivers on variability in  Species-Area Relationships (SAR) ----- ###
-#################################################################################################################
+####################################################################################################################################
+### ----- 6. Assess effect of environmental drivers on conformity [residual variance] in  Species-Area Relationships (SAR) ----- ###
+####################################################################################################################################
 
 ### Bayesian Hierarchical Model
 
@@ -292,6 +274,24 @@ bayes_R2(SAR.sigma.model)
 hypothesis(SAR.sigma.model, "sigma_z.area < 0")
 hypothesis(SAR.sigma.model, "sigma_z.rainfall < 0")
 hypothesis(SAR.sigma.model, "sigma_z.cyclones > 0")
+
+# Un-z-standardize the slope estimates
+SAR.sigma.draws <- as_draws_df(SAR.sigma.model, variable = "^b_", regex = TRUE) %>% as.data.frame()
+
+SAR.sigma.draws$b_log.area <- SAR.sigma.draws$b_z.area / sd(log(isl$area_sqkm))
+SAR.sigma.draws$b_sigma_log.area <- SAR.sigma.draws$b_sigma_z.area / sd(log(isl$area_sqkm))
+SAR.sigma.draws$b_sigma_log.rainfall <- SAR.sigma.draws$b_sigma_z.rainfall / sd(log(isl$annual_precipitation_mm))
+SAR.sigma.draws$b_sigma_log.cyclones <- SAR.sigma.draws$b_sigma_z.cyclones / sd(log(isl$hurricanes_50km+1))
+
+# Report un-z-standardized slope parameters
+SAR.sigma.intervals <- data.frame(
+  
+  mean.area = c(mean(SAR.sigma.draws$b_log.area), quantile(SAR.sigma.draws$b_log.area, probs = c(0.025, 0.975))),
+  sigma.area = c(mean(SAR.sigma.draws$b_sigma_log.area), quantile(SAR.sigma.draws$b_sigma_log.area, probs = c(0.025, 0.975))),
+  sigma.rainfall = c(mean(SAR.sigma.draws$b_sigma_log.rainfall), quantile(SAR.sigma.draws$b_sigma_log.rainfall, probs = c(0.025, 0.975))),
+  sigma.cyclones = c(mean(SAR.sigma.draws$b_sigma_log.cyclones), quantile(SAR.sigma.draws$b_sigma_log.cyclones, probs = c(0.025, 0.975)))
+  )
+round(SAR.sigma.intervals, 2)
 
 # Extract slope estimates
 mu.slope.interv.area <- fixef(SAR.sigma.model)["z.area",c("Estimate", "Q2.5", "Q97.5")]
@@ -333,7 +333,7 @@ p2.1 <- ggplot(c_mu_area, aes(x = log_area, y = estimate__)) +
   ggtitle("A. Island-level SAR of atolls") +
   annotate(geom = "text",
            x = -4.5, y = 4.5,
-           label = paste0("β = ", round(mu.slope.interv.area[1], 3), " [", round(mu.slope.interv.area[2],3), "; ", round(mu.slope.interv.area[3], 3), "]",
+           label = paste0("β = ", round(SAR.sigma.intervals$mean.area[1], 2), " [", round(SAR.sigma.intervals$mean.area[2], 2), " – ", round(SAR.sigma.intervals$mean.area[3], 2), "]",
                           "\nPP(β > 0) = ", hypothesis(SAR.sigma.model, "z.area > 0")$hypothesis$Post.Prob*100, "%"),
            hjust = 0,
            vjust = 1,
@@ -357,7 +357,7 @@ p2.2 <- ggplot(c_sigma_area, aes(x = log_area, y = estimate__)) +
   ggtitle("B. Area effect") +
   annotate(geom = "text",
            x = 6.5, y = 1,
-           label = paste0("β = ", round(sigma.slope.interv.area[1], 3), " [", round(sigma.slope.interv.area[2],3), "; ", round(sigma.slope.interv.area[3], 3), "]",
+           label = paste0("β = ", round(SAR.sigma.intervals$sigma.area[1], 2), " [", round(SAR.sigma.intervals$sigma.area[2], 2), " – ", round(SAR.sigma.intervals$sigma.area[3], 2), "]",
                           "\nPP(β < 0) = ", hypothesis(SAR.sigma.model, "sigma_z.area < 0")$hypothesis$Post.Prob*100, "%"),
            hjust = 1,
            vjust = 1,
@@ -380,7 +380,7 @@ p2.3 <- ggplot(c_sigma_rainfall, aes(x = log_rainfall, y = estimate__)) +
   ggtitle("C. Rainfall effect") +
   annotate(geom = "text",
            x = 8, y = 1,
-           label = paste0("β = ", round(sigma.slope.interv.rainfall[1], 3), " [", round(sigma.slope.interv.rainfall[2],3), "; ", round(sigma.slope.interv.rainfall[3], 3), "]",
+           label = paste0("β = ", round(SAR.sigma.intervals$sigma.rainfall[1], 2), " [", round(SAR.sigma.intervals$sigma.rainfall[2], 2), " – ", round(SAR.sigma.intervals$sigma.rainfall[3], 2), "]",
                           "\nPP(β < 0) = ", hypothesis(SAR.sigma.model, "sigma_z.rainfall < 0")$hypothesis$Post.Prob*100, "%"),
            hjust = 1,
            vjust = 1,
@@ -404,7 +404,7 @@ p2.4 <- ggplot(c_sigma_cyclones, aes(x = log_cyclones, y = estimate__)) +
   ggtitle("D. Cyclone effect") +
   annotate(geom = "text",
            x = 2.5, y = 1,
-           label = paste0("β = ", round(sigma.slope.interv.cyclones[1], 3), " [", round(sigma.slope.interv.cyclones[2],3), "; ", round(sigma.slope.interv.cyclones[3], 3), "]",
+           label = paste0("β = ", round(SAR.sigma.intervals$sigma.cyclones[1], 2), " [", round(SAR.sigma.intervals$sigma.cyclones[2], 2), " – ", round(SAR.sigma.intervals$sigma.cyclones[3], 2), "]",
                           "\nPP(β > 0) = ", hypothesis(SAR.sigma.model, "sigma_z.cyclones > 0")$hypothesis$Post.Prob*100, "%"),
            hjust = 1,
            vjust = 1,
@@ -421,7 +421,61 @@ p2 <- p2.1 / (p2.2 + p2.3 + p2.4)
 p2
 
 # Save and export as SVG vector file
-#ggsave(p2, filename = "fig02_island_SAR.svg", dpi = 300, width = 158.5, height = 140, units = "mm")
+#ggsave(p2, filename = "fig03_island_SAR.svg", dpi = 300, width = 158.5, height = 140, units = "mm")
+
+
+
+##########################################################################################################
+### ----- 7. Assess effect of environmental drivers on slope of Species-Area Relationships (SAR) ----- ###
+##########################################################################################################
+
+# Define model
+mod_SAR.slope <- bf(log(ric) ~ 1 + z.area * (z.rainfall + z.cyclones) + (1 | atoll))
+
+# Run model
+SAR.slope.model <- brm(formula = mod_SAR.slope,
+                       data = isl,
+                       family = gaussian(),
+                       chains = 4,
+                       warmup = 2500,
+                       iter = 5000,
+                       save_pars = save_pars(all = TRUE))
+# Evaluate model
+plot(SAR.slope.model)
+pp_check(SAR.slope.model, type = "dens_overlay") + theme_classic()
+gelman.diag(as.mcmc(SAR.slope.model)[,c(1:6)], multivariate = FALSE)
+geweke.diag(as.mcmc(SAR.slope.model)[,c(1:6)])
+
+# Leave-One-Out (LOO) cross-validation 
+loo(SAR.slope.model)
+
+# Explore model output
+summary(SAR.slope.model)
+bayes_R2(SAR.slope.model)
+
+# Test hypotheses that rainfall and/or cyclones influence the slope of SAR within atolls
+hypothesis(SAR.slope.model, "z.area:z.rainfall > 0")
+hypothesis(SAR.slope.model, "z.area:z.cyclones < 0")
+
+conditional_effects(SAR.slope.model)
+
+# Un-z-standardize the slope estimates
+SAR.slope.draws <- as_draws_df(SAR.slope.model, variable = "^b_", regex = TRUE) %>% as.data.frame()
+
+SAR.slope.draws$b_log.area <- SAR.slope.draws$b_z.area / sd(log(isl$area_sqkm))
+SAR.slope.draws$`b_log.area:rainfall` <- SAR.slope.draws$`b_z.area:z.rainfall` / (sd(log(isl$area_sqkm)) * sd(log(isl$annual_precipitation_mm)))
+SAR.slope.draws$`b_log.area:cyclones` <- SAR.slope.draws$`b_z.area:z.cyclones` / (sd(log(isl$area_sqkm)) * sd(log(isl$hurricanes_50km+1)))
+
+# Report un-z-standardized slope parameters
+SAR.slope.intervals <- data.frame(
+  
+  mean.area = c(mean(SAR.slope.draws$b_log.area), quantile(SAR.slope.draws$b_log.area, probs = c(0.025, 0.975))),
+  area.rainfall = c(mean(SAR.slope.draws$`b_log.area:rainfall`), quantile(SAR.slope.draws$`b_log.area:rainfall`, probs = c(0.025, 0.975))),
+  area.cyclones = c(mean(SAR.slope.draws$`b_log.area:cyclones`), quantile(SAR.slope.draws$`b_log.area:cyclones`, probs = c(0.025, 0.975)))
+)
+round(SAR.slope.intervals, 2)
+
+
 
 #########################################################################
 ### ----- 8. Evaluate atoll-level SAR and environmental drivers ----- ###
@@ -467,6 +521,24 @@ hypothesis(SAR.atoll.model, "z.cyclones > 0")
 # Extract conditional effects for plotting
 c_eff_atoll <- conditional_effects(SAR.atoll.model)
 
+# Un-z-standardize the slope estimates
+SAR.atoll.draws <- as_draws_df(SAR.atoll.model, variable = "^b_", regex = TRUE) %>% as.data.frame()
+
+SAR.atoll.draws$b_log.area <- SAR.atoll.draws$b_z.area / sd(log(atoll$total_atoll_area_sqkm))
+SAR.atoll.draws$b_log.isolation <- SAR.atoll.draws$b_z.isolation / sd(log(atoll$isolation))
+SAR.atoll.draws$b_log.rainfall <- SAR.atoll.draws$b_z.rainfall / sd(log(atoll$annual_precipitation_mm))
+SAR.atoll.draws$b_log.cyclones <- SAR.atoll.draws$b_z.cyclones / sd(log(atoll$hurricanes_50km+1))
+
+# Report un-z-standardized slope parameters
+SAR.atoll.intervals <- data.frame(
+  
+  mean.area = c(mean(SAR.atoll.draws$b_log.area), quantile(SAR.atoll.draws$b_log.area, probs = c(0.025, 0.975))),
+  mean.isol = c(mean(SAR.atoll.draws$b_log.isolation), quantile(SAR.atoll.draws$b_log.isolation, probs = c(0.025, 0.975))),
+  mean.rain = c(mean(SAR.atoll.draws$b_log.rainfall), quantile(SAR.atoll.draws$b_log.rainfall, probs = c(0.025, 0.975))),
+  mean.cycl = c(mean(SAR.atoll.draws$b_log.cyclones), quantile(SAR.atoll.draws$b_log.cyclones, probs = c(0.025, 0.975)))
+)
+round(SAR.atoll.intervals, 2)
+
 # Back-transform predictors (un-z-standardise)
 c_atoll_area <- c_eff_atoll[["z.area"]]
 c_atoll_area$log_area <- (c_atoll_area$z.area * sd(log(atoll$total_atoll_area_sqkm)) + mean(log(atoll$total_atoll_area_sqkm)))
@@ -503,7 +575,7 @@ p3.1 <- ggplot(c_atoll_area, aes(x = log_area, y = estimate__)) +
   ggtitle("A. Atoll-level SAR") +
   annotate(geom = "text",
            x = 12, y = 1.5,
-           label = paste0("β = ", round(slope.interv.area[1], 3), " [", round(slope.interv.area[2],3), "; ", round(slope.interv.area[3], 3), "]",
+           label = paste0("β = ", round(SAR.atoll.intervals$mean.area[1], 2), " [", round(SAR.atoll.intervals$mean.area[2], 2), " – ", round(SAR.atoll.intervals$mean.area[3], 2), "]",
                           "\nPP(β > 0) = ", hypothesis(SAR.atoll.model, "z.area > 0")$hypothesis$Post.Prob*100, "%"),
            hjust = 1,
            vjust = 0,
@@ -530,7 +602,7 @@ p3.2 <- ggplot(c_atoll_isolation, aes(x = log_isolation, y = estimate__)) +
   ggtitle("B. Isolation effect") +
   annotate(geom = "text",
            x = 8, y = 1.5,
-           label = paste0("β = ", round(slope.interv.isolation[1], 3), " [", round(slope.interv.isolation[2],3), "; ", round(slope.interv.isolation[3], 3), "]",
+           label = paste0("β = ", round(SAR.atoll.intervals$mean.isol[1], 2), " [", round(SAR.atoll.intervals$mean.isol[2], 2), " – ", round(SAR.atoll.intervals$mean.isol[3], 2), "]",
                           "\nPP(β < 0) = ", hypothesis(SAR.atoll.model, "z.isolation < 0")$hypothesis$Post.Prob*100, "%"),
            hjust = 1,
            vjust = 0,
@@ -557,7 +629,7 @@ p3.3 <- ggplot(c_atoll_rainfall, aes(x = log_rainfall, y = estimate__)) +
   ggtitle("B. Rainfall effect") +
   annotate(geom = "text",
            x = 8, y = 1.5,
-           label = paste0("β = ", round(slope.interv.rainfall[1], 3), " [", round(slope.interv.rainfall[2],3), "; ", round(slope.interv.rainfall[3], 3), "]",
+           label = paste0("β = ", round(SAR.atoll.intervals$mean.rain[1], 2), " [", round(SAR.atoll.intervals$mean.rain[2], 2), " – ", round(SAR.atoll.intervals$mean.rain[3], 2), "]",
                           "\nPP(β > 0) = ", hypothesis(SAR.atoll.model, "z.rainfall > 0")$hypothesis$Post.Prob*100, "%"),
            hjust = 1,
            vjust = 0,
@@ -585,7 +657,7 @@ p3.4 <- ggplot(c_atoll_cyclones, aes(x = log_cyclones, y = estimate__)) +
   ggtitle("C. Cyclone effect") +
   annotate(geom = "text",
            x = 2.5, y = 1.5,
-           label = paste0("β = ", round(slope.interv.cyclones[1], 3), " [", round(slope.interv.cyclones[2],3), "; ", round(slope.interv.cyclones[3], 3), "]",
+           label = paste0("β = ", round(SAR.atoll.intervals$mean.cycl[1], 2), " [", round(SAR.atoll.intervals$mean.cycl[2], 2), " – ", round(SAR.atoll.intervals$mean.cycl[3], 2), "]",
                           "\nPP(β > 0) = ", hypothesis(SAR.atoll.model, "z.cyclones > 0")$hypothesis$Post.Prob*100, "%"),
            hjust = 1,
            vjust = 0,
@@ -602,4 +674,4 @@ p3 <- p3.1 + p3.3 + p3.4
 p3
 
 # Export as SVG vector file
-#ggsave(p3, filename = "fig03_atoll_SAR.svg", dpi = 300, width = 158.5, height = 70, units = "mm")
+#ggsave(p3, filename = "fig04_atoll_SAR.svg", dpi = 300, width = 158.5, height = 70, units = "mm")
