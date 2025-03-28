@@ -6,6 +6,11 @@ Abstract
 
 ![](SAR_workflow.png)
 
+We compiled island-level biodiversity data for 19 atolls from literature reports, along with cumulative annual rainfall measurements and the frequency of tropical cyclone encounters per atoll.
+We then computed the species-area relationship (SAR) following Arrhenius' Power Law, which relates island species richness S to island area A through a log-log linear relationship with intercept c and slope z.
+Then, we determined the effect of rainfall and cyclone disturbance frequency on the slope parameter and the residual error in the species-area relationship, using Bayesian Distributional Modelling (i.e., Bayesian Heteroscedastic Modelling).
+We tested the hypotheses that higher rainfall amounts reduce the residual error (i.e. the ‘noise’) in species-area relationship, and increase the slope of the relationship.
+
 ## Cite
 
 ```bibtex
