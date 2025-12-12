@@ -17,11 +17,11 @@ We tested the hypotheses that higher rainfall amounts reduce the residual error 
 
 ```bibtex
 @article{steibl2025sar,
-  title={Rainfall increases conformity and strength of species area relationships in atolls},
+  title={Rainfall increases conformity and strength of species area relationships},
   author={Steibl, Sebastian and Steiger, Simon and Valente, Luís and Russell, James C},
-  journal={submitted},
+  journal={Ecography},
   year={2025}
-  doi={tbd}
+  doi={[tbd](https://doi.org/10.1002/ecog.08159)}
 }
 ```
 
