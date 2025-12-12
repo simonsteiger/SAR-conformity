@@ -21,7 +21,7 @@ We tested the hypotheses that higher rainfall amounts reduce the residual error 
   author={Steibl, Sebastian and Steiger, Simon and Valente, Luís and Russell, James C},
   journal={Ecography},
   year={2025}
-  doi={[tbd](https://doi.org/10.1002/ecog.08159)}
+  doi={(https://doi.org/10.1002/ecog.08159)}
 }
 ```
 
